@@ -65,7 +65,6 @@ service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=chrome_options)
 driver.get("https://datacenter.hankyung.com/equities-all")
 
-time.sleep(5)
 html = driver.page_source
 driver.quit()
 
