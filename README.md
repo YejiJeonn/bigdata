@@ -1,4 +1,4 @@
-<img width="960" height="418" alt="image" src="https://github.com/user-attachments/assets/423bf339-75dc-40ed-8fdc-5dd3c71a575e" /><img width="960" height="432" alt="image" src="https://github.com/user-attachments/assets/c4ea3e06-f7c6-47b0-8953-fb3e9aedc189" /># bigdata
+# bigdata
 [빅데이터] 수업용📊
 
 ### 주제 : 주가에 영향을 끼치는 금융상품 탐색 / 주식과 금융상품 간의 연관성 / 그래프 시각화 & 분석 예측
@@ -22,8 +22,7 @@
 </br></br>
 다음은 진행한 주제별 구체적인 설명입니다. </br>
 </br>
-============================================================================================
-</br></br>
+
 1. 시각화 분석
 </br></br>
 1.1. 국내 주식 분야별 비교 그래프
