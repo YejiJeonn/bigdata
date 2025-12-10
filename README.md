@@ -239,13 +239,13 @@
   LSTM: 지난 12개월 SPX 입력 → 다음달 KOSPI 예측 </br>
    </br>
 📌 ③ 모델 비교 </br>
-  Linear Regression </br>
+  Linear Regression: 가장 실제 움직임과 유사 </br>
   VAR </br>
-  LSTM: 가장 실제 움직임과 유사 </br>
+  LSTM </br>
    </br>
 📌 ④ 주요 결론 </br>
   미국장이 한국장을 예측하는 데 유효 </br>
-  LSTM이 가장 높은 설명력 </br>
+  선형회귀 모델이 가장 높은 설명력 </br>
 
 ---
 
