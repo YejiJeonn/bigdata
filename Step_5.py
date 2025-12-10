@@ -31,7 +31,7 @@ mpl.rcParams['axes.unicode_minus'] = False
 # 주식 비교를 위한 파이썬 라이브러리 사용
 
 # 비교할 기간 설정
-start_date = "2019-01-01"
+start_date = "2010-01-01"
 end_date   = "2025-01-01"
 
 # KOSPI, KOSDAQ 지수 데이터를 FinanceDataReader에서 불러오기
@@ -51,7 +51,7 @@ kosdaq_df['Norm'] = kosdaq_df['Close'] / kosdaq_df['Close'].iloc[0] * 100
 plt.figure(figsize=(10,5))
 plt.plot(kospi_df['Date'],  kospi_df['Norm'],  label="KOSPI (정규화)")
 plt.plot(kosdaq_df['Date'], kosdaq_df['Norm'], label="KOSDAQ (정규화)")
-plt.title("KOSPI vs KOSDAQ 정규화 추세 (2019~)")
+plt.title("KOSPI vs KOSDAQ 정규화 추세 (2010~)")
 plt.xlabel("날짜")
 plt.ylabel("지수 (첫 달 = 100)")
 plt.legend()
@@ -95,61 +95,113 @@ def create_sequences(data, window=60):
         y.append(data[i])
     return np.array(X), np.array(y)
 
+# 미래 예측 함수
+def predict_future(model, last_sequence, future_steps=300):
+    preds = []
+    current_seq = last_sequence.copy()  # shape (60,1)
+
+    for _ in range(future_steps):
+
+        pred = model.predict(current_seq.reshape(1,60,1), verbose=0)
+        pred_value = pred[0][0]   # 🔥 1x1 → scalar 추출
+
+        preds.append(pred_value)
+
+        # 🔥 shape 유지: (59,1) + (1,1) → (60,1)
+        current_seq = np.vstack([current_seq[1:], [[pred_value]]])
+
+    return np.array(preds)
+
+
 # ------------------------------------------------------
 # 2) LSTM 예측 수행 함수
 # ------------------------------------------------------
 def run_lstm_prediction(df, label="KOSPI"):
     print(f"\n===== {label} LSTM 예측 시작 =====")
 
-    # 1. Close 데이터만 사용
+    # 기준일
+    train_end = pd.to_datetime("2021-01-01")
+    test_end  = pd.to_datetime("2023-01-01")
+
+    # 날짜 정렬
+    df = df.sort_values("Date").copy()
+    df["Date"] = pd.to_datetime(df["Date"])
+
+    # 1. Close 데이터 스케일링
     close = df["Close"].values.reshape(-1, 1)
-
-    # 2. Scaling
     scaler = MinMaxScaler()
-    scaled = scaler.fit_transform(close)
+    scaled_all = scaler.fit_transform(close)
 
-    # 3. Sequence 생성
+    # 2. Boolean Mask 생성 (가장 중요!)
+    train_mask  = df["Date"] <= train_end
+    test_mask   = (df["Date"] > train_end) & (df["Date"] <= test_end)
+    future_mask = df["Date"] > test_end
+
+    # 3. 데이터 분리
+    scaled_train  = scaled_all[train_mask]
+    scaled_test   = scaled_all[test_mask]
+    scaled_future = scaled_all[future_mask]
+
+    # 시퀀스 생성
     window = 60
-    X_all, y_all = create_sequences(scaled, window)
+    X_train, y_train = create_sequences(scaled_train, window)
+    X_test,  y_test  = create_sequences(scaled_test, window)
 
-    # 4. Train/Test 분리 (80/20)
-    split = int(len(X_all) * 0.8)
-    X_train, X_test = X_all[:split], X_all[split:]
-    y_train, y_test = y_all[:split], y_all[split:]
-
-    # 5. LSTM 모델 구성
+    # 4. 모델 구성
     model = Sequential([
         LSTM(64, return_sequences=True, input_shape=(window, 1)),
         LSTM(32),
         Dense(1)
     ])
 
-    model.compile(optimizer="adam", loss="mse")
+    model.compile(optimizer='adam', loss='mse')
     model.fit(X_train, y_train, epochs=15, batch_size=32, validation_split=0.1, verbose=1)
 
-    # 6. 예측
-    y_pred = model.predict(X_test)
-
-    # 7. 역스케일링
-    y_pred_inv = scaler.inverse_transform(y_pred)
+    # 5. 테스트 예측
+    y_pred_test = model.predict(X_test)
+    y_pred_test_inv = scaler.inverse_transform(y_pred_test)
     y_test_inv = scaler.inverse_transform(y_test)
 
-    # 8. 예측 결과 그래프 출력
-    plt.figure(figsize=(12,5))
-    plt.plot(df["Date"].iloc[-len(y_test_inv):], y_test_inv, label=f"{label} 실제")
-    plt.plot(df["Date"].iloc[-len(y_pred_inv):], y_pred_inv, label=f"{label} 예측", linestyle="--")
-    plt.title(f"{label} LSTM 기반 예측")
-    plt.xlabel("날짜")
-    plt.ylabel("지수")
-    plt.legend()
+    # 테스트 구간 날짜
+    test_dates_full = df.loc[test_mask, "Date"].values
+    test_dates = test_dates_full[window:]
+
+    # 6. 미래 예측
+    if len(scaled_test) >= window and len(scaled_future) > 0:
+        last_seq = scaled_test[-window:]
+        future_steps = len(scaled_future)
+
+        future_pred_scaled = predict_future(model, last_seq, future_steps)
+        future_pred = scaler.inverse_transform(future_pred_scaled.reshape(-1,1))
+        future_true = scaler.inverse_transform(scaled_future)
+
+        future_dates = df.loc[future_mask, "Date"].values[:future_steps]
+    else:
+        future_pred = None
+
+    # 7. 그래프 1 — 테스트 기간
+    plt.figure(figsize=(12,4))
+    plt.plot(test_dates, y_test_inv, label="실제(테스트)")
+    plt.plot(test_dates, y_pred_test_inv, linestyle="--", label="예측(테스트)")
+    plt.title(f"{label} 테스트 구간 LSTM 예측 (2021~2023)")
     plt.grid(True)
+    plt.legend()
     plt.show()
 
-    return model, y_pred_inv, y_test_inv
+    # 8. 그래프 2 — 미래 예측
+    if future_pred is not None:
+        plt.figure(figsize=(12,4))
+        plt.plot(future_dates, future_true, label="실제(2023~)")
+        plt.plot(future_dates, future_pred, linestyle="--", label="예측(2023~)")
+        plt.title(f"{label} 미래 LSTM 예측 (2023~2025)")
+        plt.grid(True)
+        plt.legend()
+        plt.show()
+
+    return model, y_pred_test_inv, y_test_inv
 
 # ------------------------------------------------------
-# 3) KOSPI & KOSDAQ LSTM 예측 실행
+# 4) KOSPI & KOSDAQ LSTM 예측 실행
 # ------------------------------------------------------
-
-kospi_model, kospi_pred, kospi_true = run_lstm_prediction(kospi_df, label="KOSPI")
+kospi_model, kospi_pred, kospi_true = run_lstm_prediction(kospi_df,  label="KOSPI")
 kosdaq_model, kosdaq_pred, kosdaq_true = run_lstm_prediction(kosdaq_df, label="KOSDAQ")

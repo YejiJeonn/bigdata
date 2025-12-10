@@ -171,7 +171,7 @@
 
  </br>
  
-### 2.2. KOSPI 데이터 다양한 모델로 예측
+### 2.2. 환율 기반 KOSPI 예측
 <img width="960" height="260" alt="image" src="https://github.com/user-attachments/assets/4fe1cb8a-bc8d-4248-8dce-8f58e465d8d9" /> </br>
 
 📌 ① 데이터 정보 </br>
@@ -239,32 +239,32 @@
   LSTM: 지난 12개월 SPX 입력 → 다음달 KOSPI 예측 </br>
    </br>
 📌 ③ 모델 비교 </br>
-  Linear Regression: 가장 실제 움직임과 유사 </br>
+  Linear Regression </br>
   VAR </br>
-  LSTM </br>
+  LSTM: 가장 실제 움직임과 유사 </br>
    </br>
 📌 ④ 주요 결론 </br>
   미국장이 한국장을 예측하는 데 유효 </br>
-  선형회귀 모델이 가장 높은 설명력 </br>
+  LSTM이 가장 높은 설명력 </br>
 
 ---
 
 ## 🔥 최종 결론
   ### 1) 한국장은 미국 시장 영향력이 가장 크다
-    - S&P500 ↔ KOSPI 상관계수 약 0.7
-    - 한국 증시는 구조적으로 미국장에 연동
+    - S&P500 ↔ KOSPI 상관계수 약 0.7 </br>
+    - 한국 증시는 구조적으로 미국장에 연동 </br>
      
   ### 2) 환율은 KOSPI와 음(-)의 관계
-    - 달러 강세 → KOSPI 하락 가능성 증가
-    - 한국 증시는 환율 민감형 시장
+    - 달러 강세 → KOSPI 하락 가능성 증가 </br>
+    - 한국 증시는 환율 민감형 시장 </br>
      
   ### 3) 금·비트코인은 KOSPI와 낮은 상관성
-    - KOSPI 예측시 중요 변수는 아님
-    - 그러나 분산 투자에서는 의미 있음
-  
+    - KOSPI 예측시 중요 변수는 아님 </br>
+    - 그러나 분산 투자에서는 의미 있음 </br>
+     </br>
   ### 4) 예측 모델 정확도 순위
-    - LSTM > VAR > ARIMA / Prophet
+    - LSTM > VAR > ARIMA / Prophet </br>
      
  ### 5) 금융 시계열은 비선형적
-    - 완벽한 수치 예측은 불가능
-    - “방향성 예측”이 현실적 목표
+    - 완벽한 수치 예측은 불가능 </br>
+    - “방향성 예측”이 현실적 목표 </br>
